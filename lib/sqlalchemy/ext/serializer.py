@@ -54,6 +54,15 @@ needed for:
 """
 
 import re
+import io
+import builtins
+safe_builtins = {
+    'range',
+    'complex',
+    'set',
+    'frozenset',
+    'slice',
+}
 
 from .. import Column
 from .. import Table
@@ -71,6 +80,19 @@ from ..util import text_type
 
 __all__ = ["Serializer", "Deserializer", "dumps", "loads"]
 
+class RestrictedUnpickler(pickle.Unpickler):
+
+    def find_class(self, module, name):
+        """Only allow safe classes from builtins"""
+        if module == "builtins" and name in safe_builtins:
+            return getattr(builtins, name)
+        """Forbid everything else"""
+        raise pickle.UnpicklingError("global '%s.%s' is forbidden" %
+                                     (module, name))
+
+def restricted_loads(s):
+    """Helper function analogous to pickle.loads()"""
+    return RestrictedUnpickler(io.BytesIO(s)).load()
 
 def Serializer(*args, **kw):
     pickler = pickle.Pickler(*args, **kw)
