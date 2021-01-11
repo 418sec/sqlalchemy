@@ -195,5 +195,6 @@ def dumps(obj, protocol=pickle.HIGHEST_PROTOCOL):
 
 def loads(data, metadata=None, scoped_session=None, engine=None):
     buf = byte_buffer(data)
+    restricted_loads(buf.read())
     unpickler = Deserializer(buf, metadata, scoped_session, engine)
     return unpickler.load()
